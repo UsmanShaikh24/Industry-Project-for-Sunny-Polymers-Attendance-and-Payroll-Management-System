@@ -447,8 +447,8 @@ This project is proprietary software developed for Sunny Polymers. All rights re
 ### **My Team**
 
 - 👨‍💻 Member 1 — Usman Shaikh
-- 👩‍💻 Member 2 — Aditya Parade
-- 👨‍🔬 Member 3 — Sarth Mane
-- 👨‍💼 Member 4 — Jiya Sharma
+- 🧑‍💼 Member 2 — Aditya Parade
+- 🧑‍💼 Member 3 — Sarth Mane
+- 👩‍💼 Member 4 — Jiya Sharma
 
 **Built with ❤️ for Sunny Polymers by Usman Shaikh and Team** 
