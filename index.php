@@ -480,7 +480,7 @@
         <div class="container">
             <div class="hero-content">
                 <h1>Sunny Polymers</h1>
-                <p>Employee Portal - Attendance & Payroll Management System</p>
+                <p>Employee Portal - Attendance & Payroll Management System Demo</p>
                 <div class="cta-buttons">
                     <a href="login.php" class="btn-hero btn-primary-hero">
                         <i class="fas fa-sign-in-alt"></i>
