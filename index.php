@@ -229,6 +229,7 @@
             margin: 0 auto;
             line-height: 1.7;
             opacity: 0.9;
+            white-space: nowrap;
         }
         
         .features-grid {
