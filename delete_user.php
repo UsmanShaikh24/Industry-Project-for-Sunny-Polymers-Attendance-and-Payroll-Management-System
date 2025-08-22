@@ -100,60 +100,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_delete'])) {
     <div class="dashboard-container">
         <!-- Navigation -->
         <nav class="navbar">
-            <div class="navbar-content">
-                <a href="dashboard.php" class="navbar-brand">
-                    <i class="fas fa-users-cog"></i>
-                    Sunny Polymers
-                </a>
-                
-                <ul class="navbar-nav">
-                    <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                    
-                    <?php if (is_admin()): ?>
-                        <li><a href="add_user.php"><i class="fas fa-user-plus"></i> Add User</a></li>
-                        <li><a href="manage_users.php"><i class="fas fa-users"></i> Manage Users</a></li>
-                        <li><a href="add_site.php"><i class="fas fa-map-marker-alt"></i> Add Site</a></li>
-                        <li><a href="assign_site.php"><i class="fas fa-link"></i> Assign Site</a></li>
-                        <li><a href="view_attendance.php"><i class="fas fa-calendar-check"></i> Attendance</a></li>
-                        <li><a href="manage_leaves.php"><i class="fas fa-calendar-times"></i> Manage Leaves</a></li>
-                        <li><a href="generate_salary.php"><i class="fas fa-money-bill-wave"></i> Generate Salary</a></li>
-                        <li><a href="manage_advances.php"><i class="fas fa-hand-holding-usd"></i> Advances</a></li>
-                        <li><a href="upload_holidays.php"><i class="fas fa-calendar-day"></i> Holidays</a></li>
-                    <?php else: ?>
-                        <li><a href="mark_attendance.php"><i class="fas fa-clock"></i> Mark Attendance</a></li>
-                        <li><a href="apply_leave.php"><i class="fas fa-calendar-plus"></i> Apply Leave</a></li>
-                        <li><a href="holidays.php"><i class="fas fa-calendar-day"></i> Holidays</a></li>
-                        <li><a href="view_payslip.php"><i class="fas fa-file-invoice"></i> Payslips</a></li>
-                        <li><a href="view_advances.php"><i class="fas fa-hand-holding-usd"></i> Advances</a></li>
-                        <li><a href="view_attendance.php"><i class="fas fa-history"></i> History</a></li>
-                    <?php endif; ?>
-                    
-                    <li><a href="change_password.php"><i class="fas fa-key"></i> Change Password</a></li>
-                    <li><a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-                </ul>
-                
-                <!-- Right side container for notifications and mobile menu -->
-                <div class="navbar-right">
-                    <!-- Notification Section -->
-                    <div class="navbar-notifications">
-                        <div class="notification-container">
-                            <div class="notification-trigger" onclick="toggleNotifications()">
-                                <i class="fas fa-bell"></i>
-                                <span class="notification-label">Notifications</span>
-                                <?php echo getNotificationBadge($_SESSION['user_id']); ?>
-                            </div>
-                            <?php echo getNotificationDropdown($_SESSION['user_id']); ?>
-                        </div>
-                    </div>
-                    
-                    <!-- Mobile Menu Toggle -->
-                    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
-            </div>
+            <?php echo getNavigationMenu('delete_user'); ?>
         </nav>
-
         <!-- Main Content -->
         <div class="main-content">
             <div class="page-header">

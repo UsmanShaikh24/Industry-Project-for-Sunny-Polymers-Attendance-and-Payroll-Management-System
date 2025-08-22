@@ -15,6 +15,16 @@ CREATE TABLE users (
     state VARCHAR(50) NOT NULL,
     date_of_joining DATE NOT NULL,
     salary DECIMAL(10,2) NOT NULL,
+    dearness_allowance DECIMAL(10,2) DEFAULT 0.00,
+    medical_allowance DECIMAL(10,2) DEFAULT 0.00,
+    house_rent_allowance DECIMAL(10,2) DEFAULT 0.00,
+    conveyance_allowance DECIMAL(10,2) DEFAULT 0.00,
+    pf_uan_number VARCHAR(30) DEFAULT NULL,
+    overtime_rate DECIMAL(10,2) DEFAULT 0.00,
+    bank_name VARCHAR(100) DEFAULT NULL,
+    account_number VARCHAR(30) DEFAULT NULL,
+    ifsc_code VARCHAR(20) DEFAULT NULL,
+    branch_name VARCHAR(100) DEFAULT NULL,
     site_id INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -36,6 +46,7 @@ CREATE TABLE sites (
     latitude DECIMAL(10,8) NOT NULL,
     longitude DECIMAL(11,8) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_state (state),
     INDEX idx_location (latitude, longitude),
     INDEX idx_city (city)
@@ -53,6 +64,8 @@ CREATE TABLE attendance (
     check_out_lat DECIMAL(10,8) NULL,
     check_out_lng DECIMAL(11,8) NULL,
     status ENUM('present', 'absent', 'late', 'half_day') DEFAULT 'absent',
+    overtime_hours DECIMAL(4,2) DEFAULT 0.00,
+    overtime_rate DECIMAL(10,2) DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE KEY unique_user_date (user_id, date),
@@ -115,7 +128,12 @@ CREATE TABLE payslips (
     leave_days INT DEFAULT 0,
     total_days INT NOT NULL,
     earned_salary DECIMAL(10,2) NOT NULL,
+    overtime_hours DECIMAL(6,2) DEFAULT 0.00,
+    overtime_pay DECIMAL(10,2) DEFAULT 0.00,
     advances DECIMAL(10,2) DEFAULT 0.00,
+    professional_tax DECIMAL(10,2) DEFAULT 0.00,
+    pf_amount DECIMAL(10,2) DEFAULT 0.00,
+    pf_previous_balance DECIMAL(10,2) DEFAULT 0.00,
     deductions DECIMAL(10,2) DEFAULT 0.00,
     net_salary DECIMAL(10,2) NOT NULL,
     generated_by INT NULL,
@@ -144,7 +162,7 @@ CREATE TABLE notifications (
 -- Insert default admin user
 -- Password: admin123 (hashed with password_hash)
 INSERT INTO users (name, mobile, password, role, state, date_of_joining, salary) VALUES 
-('Admin User', '9999999999', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'Gujarat', '2024-01-01', 50000.00);
+('Admin User', '9999999999', '$2y$10$BsjfhQeufJC3xSwS/MGbkOdThmp4JWMRrDioOc3g63TmElV/sP7GW', 'admin', 'Gujarat', '2024-01-01', 50000.00);
 
 -- Insert sample sites
 INSERT INTO sites (name, state, latitude, longitude) VALUES 
@@ -173,8 +191,92 @@ INSERT INTO attendance (user_id, date, check_in_time, check_out_time, check_in_l
 (3, CURDATE(), '08:45:00', '17:30:00', 19.0760, 72.8777, 'present'),
 (4, CURDATE(), '09:15:00', NULL, 23.0225, 72.5714, 'present'); 
 
-ALTER TABLE users
-ADD COLUMN bank_name VARCHAR(100) DEFAULT NULL,
-ADD COLUMN account_number VARCHAR(30) DEFAULT NULL,
-ADD COLUMN ifsc_code VARCHAR(20) DEFAULT NULL,
-ADD COLUMN branch_name VARCHAR(100) DEFAULT NULL; 
+-- ========================================
+-- ALTER TABLE STATEMENTS FOR EXISTING DATABASES
+-- ========================================
+
+-- Add allowance fields to existing users table (skip if exists)
+-- Run these commands if you already have a database with the old schema
+
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS dearness_allowance DECIMAL(10,2) DEFAULT 0.00 AFTER salary;
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS medical_allowance DECIMAL(10,2) DEFAULT 0.00 AFTER dearness_allowance;
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS house_rent_allowance DECIMAL(10,2) DEFAULT 0.00 AFTER medical_allowance;
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS conveyance_allowance DECIMAL(10,2) DEFAULT 0.00 AFTER house_rent_allowance;
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS pf_uan_number VARCHAR(30) DEFAULT NULL AFTER conveyance_allowance;
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS overtime_rate DECIMAL(10,2) DEFAULT 0.00 AFTER pf_uan_number;
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS bank_name VARCHAR(100) DEFAULT NULL AFTER overtime_rate;
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS account_number VARCHAR(30) DEFAULT NULL AFTER bank_name;
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS ifsc_code VARCHAR(20) DEFAULT NULL AFTER account_number;
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS branch_name VARCHAR(100) DEFAULT NULL AFTER ifsc_code;
+
+-- Add new payslip fields to existing payslips table (skip if exists)
+-- Run these commands if you already have a database with the old schema
+
+-- ALTER TABLE payslips ADD COLUMN IF NOT EXISTS professional_tax DECIMAL(10,2) DEFAULT 0.00 AFTER advances;
+-- ALTER TABLE payslips ADD COLUMN IF NOT EXISTS pf_amount DECIMAL(10,2) DEFAULT 0.00 AFTER professional_tax;
+-- ALTER TABLE payslips ADD COLUMN IF NOT EXISTS pf_previous_balance DECIMAL(10,2) DEFAULT 0.00 AFTER pf_amount;
+-- ALTER TABLE payslips ADD COLUMN IF NOT EXISTS overtime_hours DECIMAL(6,2) DEFAULT 0.00 AFTER earned_salary;
+-- ALTER TABLE payslips ADD COLUMN IF NOT EXISTS overtime_pay DECIMAL(10,2) DEFAULT 0.00 AFTER overtime_hours;
+
+-- Add overtime fields to existing attendance table (skip if exists)
+-- Run these commands if you already have a database with the old schema
+
+-- ALTER TABLE attendance ADD COLUMN IF NOT EXISTS overtime_hours DECIMAL(4,2) DEFAULT 0.00 AFTER status;
+-- ALTER TABLE attendance ADD COLUMN IF NOT EXISTS overtime_rate DECIMAL(10,2) DEFAULT 0.00 AFTER overtime_hours;
+
+-- Add updated_at column to existing sites table (skip if exists)
+-- Run this command if you already have a database with the old schema
+
+-- ALTER TABLE sites ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+-- ========================================
+-- NOTES ON ALLOWANCE FIELDS
+-- ========================================
+
+-- Dearness Allowance (DA): Cost of living adjustment allowance
+-- Medical Allowance: Medical expenses reimbursement
+-- House Rent Allowance (HRA): Housing accommodation allowance
+-- Conveyance Allowance: Transportation and travel expenses
+
+-- These fields will be used in payslip generation to calculate:
+-- 1. Total Earnings = Basic Salary + All Allowances
+-- 2. Gross Salary = Total Earnings
+-- 3. Net Salary = Gross Salary - Deductions (advances, etc.)
+
+-- ========================================
+-- PAYSLIP DEDUCTION FIELDS
+-- ========================================
+
+-- Professional Tax: Monthly tax deduction based on salary slabs (varies by state)
+-- PF Amount: Provident Fund contribution (usually 12% of basic salary)
+-- Total Deductions = Advances + Professional Tax + PF Amount
+
+-- These fields provide comprehensive salary calculation including:
+-- 1. All statutory deductions (Professional Tax, PF)
+-- 2. Company advances
+-- 3. Accurate net salary calculation 
+
+-- ========================================
+-- OVERTIME SYSTEM EXPLANATION
+-- ========================================
+
+-- Overtime Hours: Decimal field to store overtime hours (e.g., 2.5 hours)
+-- Overtime Rate: Hourly rate for overtime (usually 1.5x or 2x normal hourly rate)
+-- Overtime Pay: Calculated overtime compensation (overtime_hours * overtime_rate)
+
+-- The system will:
+-- 1. Track daily overtime hours based on check-in/check-out times
+-- 2. Calculate overtime pay during salary generation
+-- 3. Include overtime in payslip calculations
+-- 4. Allow admins to set custom overtime rates per employee
+
+-- ========================================
+-- BANK ACCOUNT FIELDS
+-- ========================================
+
+-- Bank Name: Employee's bank name for salary transfer
+-- Account Number: Employee's bank account number
+-- IFSC Code: Bank's IFSC code for transfers
+-- Branch Name: Bank branch name
+
+-- These fields enable direct bank transfers for salary payments 

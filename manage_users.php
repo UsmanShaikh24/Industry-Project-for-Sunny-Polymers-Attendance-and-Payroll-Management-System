@@ -122,36 +122,8 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
     <div class="dashboard-container">
         <!-- Navigation -->
         <nav class="navbar">
-            <div class="navbar-content">
-                <a href="dashboard.php" class="navbar-brand">
-                    <i class="fas fa-industry"></i>
-                    Sunny Polymers
-                </a>
-                
-                <?php echo getNavigationMenu('manage_users'); ?>
-                
-                <!-- Right side container for notifications and mobile menu -->
-                <div class="navbar-right">
-                    <!-- Notification Section -->
-                    <div class="navbar-notifications">
-                        <div class="notification-container">
-                            <div class="notification-trigger" onclick="toggleNotifications()">
-                                <i class="fas fa-bell"></i>
-                                <span class="notification-label">Notifications</span>
-                                <?php echo getNotificationBadge($_SESSION['user_id']); ?>
-                            </div>
-                            <?php echo getNotificationDropdown($_SESSION['user_id']); ?>
-                        </div>
-                    </div>
-                    
-                    <!-- Mobile Menu Toggle -->
-                    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
-            </div>
+            <?php echo getNavigationMenu('manage_users'); ?>
         </nav>
-
         <!-- Main Content -->
         <div class="main-content">
             <div class="page-header">

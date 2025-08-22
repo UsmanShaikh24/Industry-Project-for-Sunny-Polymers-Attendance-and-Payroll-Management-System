@@ -32,6 +32,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $ifsc_code = sanitize_input($_POST['ifsc_code']);
     $branch_name = sanitize_input($_POST['branch_name']);
     
+    // Allowance fields
+    $dearness_allowance = !empty($_POST['dearness_allowance']) ? sanitize_input($_POST['dearness_allowance']) : 0.00;
+    $medical_allowance = !empty($_POST['medical_allowance']) ? sanitize_input($_POST['medical_allowance']) : 0.00;
+    $house_rent_allowance = !empty($_POST['house_rent_allowance']) ? sanitize_input($_POST['house_rent_allowance']) : 0.00;
+    $conveyance_allowance = !empty($_POST['conveyance_allowance']) ? sanitize_input($_POST['conveyance_allowance']) : 0.00;
+    $pf_uan_number = sanitize_input($_POST['pf_uan_number']);
+    
     // Validate mobile number
     if (!preg_match('/^[0-9]{10}$/', $mobile)) {
         $message = 'Please enter a valid 10-digit mobile number.';
@@ -50,8 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $default_password = generateSecurePassword();
             $hashed_password = password_hash($default_password, PASSWORD_DEFAULT);
             
-            $stmt = $conn->prepare("INSERT INTO users (name, mobile, password, role, state, date_of_joining, salary, site_id, bank_name, account_number, ifsc_code, branch_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssssdissss", $name, $mobile, $hashed_password, $role, $state, $date_of_joining, $salary, $site_id, $bank_name, $account_number, $ifsc_code, $branch_name);
+            $stmt = $conn->prepare("INSERT INTO users (name, mobile, password, role, state, date_of_joining, salary, dearness_allowance, medical_allowance, house_rent_allowance, conveyance_allowance, pf_uan_number, site_id, bank_name, account_number, ifsc_code, branch_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssssdddddssisss", $name, $mobile, $hashed_password, $role, $state, $date_of_joining, $salary, $dearness_allowance, $medical_allowance, $house_rent_allowance, $conveyance_allowance, $pf_uan_number, $site_id, $bank_name, $account_number, $ifsc_code, $branch_name);
             
             if ($stmt->execute()) {
                 // Store success message in session and redirect
@@ -96,34 +103,7 @@ $users = $stmt->get_result();
     <div class="dashboard-container">
         <!-- Navigation -->
         <nav class="navbar">
-            <div class="navbar-content">
-                <a href="dashboard.php" class="navbar-brand">
-                    <i class="fas fa-users-cog"></i>
-                    Sunny Polymers
-                </a>
-                
-                <?php echo getNavigationMenu('add_user'); ?>
-                
-                <!-- Right side container for notifications and mobile menu -->
-                <div class="navbar-right">
-                    <!-- Notification Section -->
-                    <div class="navbar-notifications">
-                        <div class="notification-container">
-                            <div class="notification-trigger" onclick="toggleNotifications()">
-                                <i class="fas fa-bell"></i>
-                                <span class="notification-label">Notifications</span>
-                                <?php echo getNotificationBadge($_SESSION['user_id']); ?>
-                            </div>
-                            <?php echo getNotificationDropdown($_SESSION['user_id']); ?>
-                        </div>
-                    </div>
-                    
-                    <!-- Mobile Menu Toggle -->
-                    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
-            </div>
+            <?php echo getNavigationMenu('add_user'); ?>
         </nav>
 
         <!-- Main Content -->
@@ -230,6 +210,38 @@ $users = $stmt->get_result();
                             </div>
                         </div>
                         
+                        <!-- Allowance Fields -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="dearness_allowance">Dearness Allowance (₹)</label>
+                                <input type="number" id="dearness_allowance" name="dearness_allowance" class="form-control" value="<?php echo isset($_POST['dearness_allowance']) ? htmlspecialchars($_POST['dearness_allowance']) : '0'; ?>" min="0" step="0.01" placeholder="0.00">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="medical_allowance">Medical Allowance (₹)</label>
+                                <input type="number" id="medical_allowance" name="medical_allowance" class="form-control" value="<?php echo isset($_POST['medical_allowance']) ? htmlspecialchars($_POST['medical_allowance']) : '0'; ?>" min="0" step="0.01" placeholder="0.00">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="house_rent_allowance">House Rent Allowance (₹)</label>
+                                <input type="number" id="house_rent_allowance" name="house_rent_allowance" class="form-control" value="<?php echo isset($_POST['house_rent_allowance']) ? htmlspecialchars($_POST['house_rent_allowance']) : '0'; ?>" min="0" step="0.01" placeholder="0.00">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="conveyance_allowance">Conveyance Allowance (₹)</label>
+                                <input type="number" id="conveyance_allowance" name="conveyance_allowance" class="form-control" value="<?php echo isset($_POST['conveyance_allowance']) ? htmlspecialchars($_POST['conveyance_allowance']) : '0'; ?>" min="0" step="0.01" placeholder="0.00">
+                            </div>
+                        </div>
+                        
+                        <!-- PF UAN Number Field -->
+                        <div class="form-group">
+                            <label for="pf_uan_number">PF UAN Number (Optional)</label>
+                            <input type="text" id="pf_uan_number" name="pf_uan_number" class="form-control" value="<?php echo isset($_POST['pf_uan_number']) ? htmlspecialchars($_POST['pf_uan_number']) : ''; ?>" placeholder="Enter PF UAN Number" maxlength="30">
+                            <small class="form-text text-muted">12-digit Universal Account Number for Provident Fund</small>
+                        </div>
+                        
                         <div class="form-group">
                             <label for="site_id">Assign Site (Optional)</label>
                             <select id="site_id" name="site_id" class="form-control">
@@ -285,6 +297,8 @@ $users = $stmt->get_result();
                                     <th>Role</th>
                                     <th>Site</th>
                                     <th>Salary</th>
+                                    <th>Total Allowances</th>
+                                    <th>Bank Details</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -301,6 +315,26 @@ $users = $stmt->get_result();
                                     </td>
                                     <td><?php echo htmlspecialchars($user['site_name'] ?? 'Not Assigned'); ?></td>
                                     <td>₹<?php echo number_format($user['salary'], 2); ?></td>
+                                    <td>
+                                        <?php 
+                                        $total_allowances = ($user['dearness_allowance'] ?? 0) + 
+                                                          ($user['medical_allowance'] ?? 0) + 
+                                                          ($user['house_rent_allowance'] ?? 0) + 
+                                                          ($user['conveyance_allowance'] ?? 0);
+                                        echo '₹' . number_format($total_allowances, 2);
+                                        ?>
+                                    </td>
+                                    <td>
+                                        <?php if ($user['bank_name'] && $user['account_number']): ?>
+                                            <small>
+                                                <strong><?php echo htmlspecialchars($user['bank_name']); ?></strong><br>
+                                                A/C: <?php echo htmlspecialchars($user['account_number']); ?><br>
+                                                IFSC: <?php echo htmlspecialchars($user['ifsc_code'] ?? 'N/A'); ?>
+                                            </small>
+                                        <?php else: ?>
+                                            <span class="text-muted">Not specified</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <?php if ($user['role'] == 'admin'): ?>
                                             <span class="status-admin">Admin</span>

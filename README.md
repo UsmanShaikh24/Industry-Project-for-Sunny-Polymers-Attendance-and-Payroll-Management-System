@@ -15,17 +15,23 @@ A comprehensive, web-based employee portal for managing attendance, payroll, lea
 - **Geolocation-based**: GPS coordinates for each work site
 - **Address Management**: Complete address fields (line 1, line 2, city, pincode, state, country)
 - **Auto-fill Location**: Use current GPS location to auto-populate address fields
-- **Site Assignment**: Assign workers to specific work locations
+- **Site Assignment**: Advanced worker assignment with comprehensive search and filtering
+- **Manage Sites**: Dedicated site management page with edit, delete, and overview features
+- **Smart Search**: Real-time search and filtering for efficient site assignments
+- **Timestamp Tracking**: Automatic creation and update timestamps for all sites
 
 ### 📅 **Attendance System**
 - **GPS Verification**: Check-in/out with location tracking
 - **Real-time Monitoring**: Live attendance status for admins
 - **Comprehensive View**: Admin can view all attendance records across all dates
 - **Status Tracking**: Present, Absent, Late, Half-day statuses
+- **Overtime Tracking**: Automatic overtime calculation on check-out
 - **Statistics**: Attendance rates, present/absent counts, daily averages
 
 ### 💰 **Payroll Management**
 - **Salary Calculation**: Automatic salary computation based on attendance
+- **Overtime Management**: Complete overtime tracking and rate management
+- **Overtime Reports**: Comprehensive overtime analytics with PDF export
 - **Advance Management**: Track and manage employee advances
 - **Deduction Handling**: Support for negative net salary (advance repayment)
 - **PDF Generation**: Professional payslip generation using DOMPDF
@@ -51,8 +57,10 @@ A comprehensive, web-based employee portal for managing attendance, payroll, lea
 
 ### 📱 **Responsive Design**
 - **Mobile-First**: Optimized for all device sizes
-- **Modern UI**: Clean, intuitive interface with dropdown navigation
+- **Modern UI**: Clean, intuitive interface with animated dropdown navigation
 - **Touch-Friendly**: Optimized for mobile and tablet use
+- **Icon-Only Navigation**: Consistent icon-only mobile navigation
+- **Smooth Animations**: Animated arrow flips and smooth transitions
 - **Cross-Browser**: Compatible with all modern browsers
 
 ## 🛠️ **Technology Stack**
@@ -94,9 +102,10 @@ attendance-system/
 │
 ├── 📍 Site Management
 │   ├── add_site.php              # Add new work sites
-│   ├── edit_site.php             # Modify site details
+│   ├── manage_sites.php          # Comprehensive site management
+│   ├── edit_site.php             # Modify site details with location features
 │   ├── delete_site.php           # Remove sites
-│   └── assign_site.php           # Assign workers to sites
+│   └── assign_site.php           # Advanced worker assignment with search
 │
 ├── 📅 Attendance & Leave
 │   ├── mark_attendance.php       # Check-in/out system
@@ -108,6 +117,8 @@ attendance-system/
 │   ├── generate_salary.php       # Salary generation
 │   ├── view_payslip.php          # Payslip viewing
 │   ├── generate_pdf_payslip.php  # PDF generation
+│   ├── overtime_management.php   # Overtime rate management
+│   ├── overtime_report.php       # Overtime analytics & reports
 │   ├── manage_advances.php       # Advance management
 │   └── view_advances.php         # Advance records
 │
@@ -128,6 +139,7 @@ attendance-system/
 │
 ├── 🎨 Assets
 │   ├── style.css                 # Main stylesheet
+│   ├── navigation.css            # Navigation and mobile styles
 │   ├── script.js                 # JavaScript functions
 │   └── favicon.png               # Site icon
 │
@@ -171,13 +183,13 @@ attendance-system/
    ```
 
 4. **Configure Database Connection**
-   ```php
+```php
    # Edit includes/db.php
-   $host = 'localhost';
-   $username = 'your_db_username';
-   $password = 'your_db_password';
-   $database = 'attendance_system';
-   ```
+$host = 'localhost';
+$username = 'your_db_username';
+$password = 'your_db_password';
+$database = 'attendance_system';
+```
 
 5. **Set Permissions**
    ```bash
@@ -206,13 +218,13 @@ attendance-system/
 ## 📊 **Database Schema**
 
 ### **Core Tables**
-- **users**: Employee information, roles, salaries
+- **users**: Employee information, roles, salaries, overtime rates
 - **sites**: Work location details with GPS coordinates
-- **attendance**: Daily check-in/out records
+- **attendance**: Daily check-in/out records with overtime tracking
 - **leave_requests**: Leave applications and approvals
 - **holidays**: State-specific and national holidays
 - **advances**: Employee advance tracking
-- **payslips**: Salary generation records
+- **payslips**: Salary generation records with overtime pay
 - **notifications**: System notifications
 
 ### **Key Features**
@@ -229,6 +241,7 @@ attendance-system/
 - Site management
 - Attendance monitoring
 - Salary generation
+- Overtime management and reporting
 - Leave approval
 - Holiday management
 - Password reset for all users
@@ -249,6 +262,15 @@ attendance-system/
 
 ## 📱 **Key Features in Detail**
 
+### **Advanced Site Assignment System**
+- **Smart Search**: Real-time search by worker name, mobile, or current site
+- **Multi-Filter Options**: Filter by role (Worker/Staff), assignment status, specific sites
+- **Dropdown Filtering**: Live filtering of assignment dropdown options
+- **Easy Workflow**: Search first, then select from filtered results - easy peasy!
+- **Visual Instructions**: Built-in help guide for using search and filter features
+- **Filter Summary**: Real-time display of current search results count
+- **Responsive Design**: Mobile-optimized search and filter interface
+
 ### **GPS-Based Attendance**
 - **Location Verification**: Ensures workers are at assigned sites
 - **Real-time Tracking**: Live location capture during check-in/out
@@ -257,15 +279,27 @@ attendance-system/
 
 ### **Smart Payroll System**
 - **Automatic Calculations**: Salary based on attendance and leaves
+- **Overtime Integration**: Automatic overtime calculation and pay
 - **Advance Integration**: Tracks and deducts advances from salary
 - **Negative Salary Support**: Handles cases where advances exceed earnings
-- **Professional PDFs**: Company-branded payslips
+- **Professional PDFs**: Company-branded payslips with overtime details
+
+### **Comprehensive Overtime Management**
+- **Automatic Calculation**: Overtime hours calculated on check-out (>8 hours = overtime)
+- **Flexible Rates**: Individual and global overtime rate management
+- **Real-time Tracking**: Live overtime statistics and summaries
+- **Detailed Reports**: Monthly overtime analytics with filtering options
+- **PDF Export**: Professional overtime reports with employee details
+- **Top Earners**: Rankings of highest overtime earners
+- **Integration**: Seamless integration with payroll and payslips
 
 ### **Responsive Navigation**
-- **Dropdown Menus**: Organized, clutter-free navigation
-- **Mobile Optimization**: Hamburger menu for mobile devices
+- **Dropdown Menus**: Organized, clutter-free navigation with animated arrows
+- **Mobile Optimization**: Hamburger menu with touch-friendly interactions
 - **Role-based Access**: Different menus for different user types
 - **Consistent Layout**: Unified navigation across all pages
+- **Smart Toggle**: Click to open/close dropdowns on mobile
+- **Icon-Only Mobile**: Clean icon-only notifications and navigation
 
 ## 🔧 **Configuration Options**
 
@@ -380,6 +414,14 @@ sudo systemctl status mysql
 # Verify site coordinates in database
 ```
 
+#### **Search & Filter Issues**
+```bash
+# Clear browser cache if filters don't respond
+# Check JavaScript console for errors
+# Verify dropdown options are populated correctly
+# Ensure database has workers/staff data
+```
+
 ### **Error Logs**
 - **PHP Errors**: Check web server error logs
 - **Database Errors**: MySQL error log
@@ -410,6 +452,21 @@ This project is proprietary software developed for Sunny Polymers. All rights re
 
 ## 🔮 **Future Enhancements**
 
+### **Recent Updates & Improvements**
+
+#### **Site Management Enhancements**
+- **Intelligent Search**: Type worker names or mobile numbers to instantly filter assignment options
+- **Multi-Criteria Filtering**: Combine search with role and status filters for precise results
+- **User-Friendly Instructions**: Built-in guidance with "Easy Peasy Steps" for new users
+- **Real-Time Feedback**: Live filter summaries showing current results count
+- **Professional Interface**: Clean, modern design with intuitive user experience
+
+#### **Database Schema Optimization**
+- **Consolidated Schema**: All database updates centralized in main schema file
+- **Timezone Consistency**: Proper timezone handling for accurate timestamps
+- **Column Safety**: IF NOT EXISTS clauses for safe database migrations
+- **Comprehensive Coverage**: All overtime, allowance, and site fields included
+
 ### **Planned Features**
 - **Email Integration**: Automated email notifications
 - **Mobile App**: Native mobile applications
@@ -428,7 +485,25 @@ This project is proprietary software developed for Sunny Polymers. All rights re
 
 ## 📝 **Changelog**
 
-### **Version 2.0.0** (Current)
+### **Version 2.2.0** (Current)
+- 🔍 **NEW**: Advanced search and filtering system for site assignments
+- 📍 **NEW**: Dedicated "Manage Sites" page with comprehensive site overview
+- 🎯 **NEW**: Real-time dropdown filtering with visual instructions
+- ⏰ **NEW**: Improved timestamp tracking for site updates
+- 🗺️ **IMPROVED**: Enhanced "Edit Site" page with current location features
+- 📱 **IMPROVED**: Mobile-optimized search interface with responsive design
+- 🎨 **IMPROVED**: Professional styling for search and filter components
+
+### **Version 2.1.0**
+- 🚀 **NEW**: Complete overtime management system
+- 📊 **NEW**: Overtime analytics and reporting with PDF export
+- 📱 **IMPROVED**: Enhanced mobile navigation with animated arrows
+- 🎯 **IMPROVED**: Smart dropdown toggle behavior for mobile
+- 🎨 **IMPROVED**: Icon-only mobile navigation for consistency
+- ⚡ **IMPROVED**: Automatic overtime calculation on check-out
+- 💰 **IMPROVED**: Overtime integration in payroll and payslips
+
+### **Version 2.0.0**
 - ✨ Complete UI redesign with modern navigation
 - 🎨 Responsive design for all devices
 - 📱 Mobile-optimized interface
@@ -444,11 +519,6 @@ This project is proprietary software developed for Sunny Polymers. All rights re
 - User management
 - Basic reporting
 
-### **My Team**
+---
 
-- 👨‍💻 Member 1 — Usman Shaikh
-- 🧑‍💼 Member 2 — Aditya Parade
-- 🧑‍💼 Member 3 — Sarth Mane
-- 👩‍💼 Member 4 — Jiya Sharma
-
-**Built with ❤️ for Sunny Polymers by Usman Shaikh and Team** 
+**Built with ❤️ for Sunny Polymers by Usman Shaikh and his Team** 

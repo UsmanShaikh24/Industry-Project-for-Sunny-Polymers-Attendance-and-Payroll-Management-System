@@ -95,36 +95,8 @@ $sites = $stmt->get_result();
     <div class="dashboard-container">
         <!-- Navigation -->
         <nav class="navbar">
-            <div class="navbar-content">
-                <a href="dashboard.php" class="navbar-brand">
-                    <i class="fas fa-users-cog"></i>
-                    Sunny Polymers
-                </a>
-                
-                <?php echo getNavigationMenu('add_site'); ?>
-                
-                <!-- Right side container for notifications and mobile menu -->
-                <div class="navbar-right">
-                    <!-- Notification Section -->
-                    <div class="navbar-notifications">
-                        <div class="notification-container">
-                            <div class="notification-trigger" onclick="toggleNotifications()">
-                                <i class="fas fa-bell"></i>
-                                <span class="notification-label">Notifications</span>
-                                <?php echo getNotificationBadge($_SESSION['user_id']); ?>
-                            </div>
-                            <?php echo getNotificationDropdown($_SESSION['user_id']); ?>
-                        </div>
-                    </div>
-                    
-                    <!-- Mobile Menu Toggle -->
-                    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
-            </div>
+            <?php echo getNavigationMenu('add_site'); ?>
         </nav>
-
         <!-- Main Content -->
         <div class="main-content">
             <div class="page-header">
@@ -222,6 +194,11 @@ $sites = $stmt->get_result();
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">All Sites</h3>
+                        <div class="card-actions">
+                            <a href="manage_sites.php" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-list"></i> Manage Sites
+                            </a>
+                        </div>
                     </div>
                     
                     <div class="table-container">
@@ -497,6 +474,17 @@ $sites = $stmt->get_result();
         
         .text-muted {
             color: #6c757d;
+            font-size: 0.875rem;
+        }
+        
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
             font-size: 0.875rem;
         }
     </style>

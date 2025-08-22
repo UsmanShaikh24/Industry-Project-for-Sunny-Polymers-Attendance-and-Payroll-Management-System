@@ -76,11 +76,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $message = "You have already checked out today!";
                 $message_type = 'warning';
             } else {
-                $stmt = $conn->prepare("UPDATE attendance SET check_out_time = ?, check_out_lat = ?, check_out_lng = ? WHERE user_id = ? AND date = ?");
-                $stmt->bind_param("sddss", $current_time, $latitude, $longitude, $_SESSION['user_id'], $current_date);
+                // Calculate overtime hours
+                $check_in_time = strtotime($existing_attendance['check_in_time']);
+                $check_out_time = strtotime($current_time);
+                $total_seconds = $check_out_time - $check_in_time;
+                $total_hours = $total_seconds / 3600;
+                
+                // Standard working hours (8 hours with 1 hour break)
+                $standard_hours = 8;
+                $overtime_hours = max(0, $total_hours - $standard_hours);
+                
+                // Get user's overtime rate
+                $stmt = $conn->prepare("SELECT overtime_rate FROM users WHERE id = ?");
+                $stmt->bind_param("i", $_SESSION['user_id']);
+                $stmt->execute();
+                $user_result = $stmt->get_result()->fetch_assoc();
+                $overtime_rate = $user_result['overtime_rate'] ?? 0;
+                
+                // Update attendance with overtime calculation
+                $stmt = $conn->prepare("UPDATE attendance SET check_out_time = ?, check_out_lat = ?, check_out_lng = ?, overtime_hours = ?, overtime_rate = ? WHERE user_id = ? AND date = ?");
+                $stmt->bind_param("sddddss", $current_time, $latitude, $longitude, $overtime_hours, $overtime_rate, $_SESSION['user_id'], $current_date);
                 
                 if ($stmt->execute()) {
-                    $message = "Check-out successful! Time: " . $current_time;
+                    $overtime_message = "";
+                    if ($overtime_hours > 0) {
+                        $overtime_message = " Overtime: " . number_format($overtime_hours, 2) . " hours";
+                    }
+                    $message = "Check-out successful! Time: " . $current_time . $overtime_message;
                     $message_type = 'success';
                 } else {
                     $message = "Error marking attendance. Please try again.";
@@ -116,36 +138,8 @@ $today_attendance = $stmt->get_result()->fetch_assoc();
     <div class="dashboard-container">
         <!-- Navigation -->
         <nav class="navbar">
-            <div class="navbar-content">
-                <a href="dashboard.php" class="navbar-brand">
-                    <i class="fas fa-industry"></i>
-                    Sunny Polymers
-                </a>
-                
-                <?php echo getNavigationMenu('mark_attendance'); ?>
-                
-                <!-- Right side container for notifications and mobile menu -->
-                <div class="navbar-right">
-                    <!-- Notification Section -->
-                    <div class="navbar-notifications">
-                        <div class="notification-container">
-                            <div class="notification-trigger" onclick="toggleNotifications()">
-                                <i class="fas fa-bell"></i>
-                                <span class="notification-label">Notifications</span>
-                                <?php echo getNotificationBadge($_SESSION['user_id']); ?>
-                            </div>
-                            <?php echo getNotificationDropdown($_SESSION['user_id']); ?>
-                        </div>
-                    </div>
-                    
-                    <!-- Mobile Menu Toggle -->
-                    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
-            </div>
+            <?php echo getNavigationMenu('mark_attendance'); ?>
         </nav>
-
         <!-- Main Content -->
         <div class="main-content">
             <div class="page-header">

@@ -20,6 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $user_id = $_POST['user_id'];
         $month = $_POST['month'];
         $year = $_POST['year'];
+        $professional_tax = !empty($_POST['professional_tax']) ? (float)$_POST['professional_tax'] : 0.00;
+        $pf_amount = !empty($_POST['pf_amount']) ? (float)$_POST['pf_amount'] : 0.00;
         
         // Get user details
         $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
@@ -56,12 +58,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $advances = $stmt->get_result()->fetch_assoc();
             $total_advance = $advances['total_advance'] ?? 0;
             
-            // Calculate salary
+            // Calculate salary with allowances
             $basic_salary = $user['salary'];
-            $per_day_salary = $basic_salary / $total_days;
+            $dearness_allowance = $user['dearness_allowance'] ?? 0;
+            $medical_allowance = $user['medical_allowance'] ?? 0;
+            $house_rent_allowance = $user['house_rent_allowance'] ?? 0;
+            $conveyance_allowance = $user['conveyance_allowance'] ?? 0;
+            
+            $total_allowances = $dearness_allowance + $medical_allowance + $house_rent_allowance + $conveyance_allowance;
+            
+            $per_day_salary = ($basic_salary + $total_allowances) / $total_days;
             $earned_salary = $per_day_salary * ($present_days + $leave_days);
-            $deductions = $total_advance;
-            $net_salary = $earned_salary - $deductions; // Allow negative values for accurate accounting
+            
+            // Calculate overtime pay
+            $stmt = $conn->prepare("SELECT SUM(overtime_hours) as total_overtime, AVG(overtime_rate) as avg_rate FROM attendance WHERE user_id = ? AND date BETWEEN ? AND ? AND overtime_hours > 0");
+            $stmt->bind_param("iss", $user_id, $start_date, $end_date);
+            $stmt->execute();
+            $overtime_result = $stmt->get_result()->fetch_assoc();
+            
+            $total_overtime_hours = $overtime_result['total_overtime'] ?? 0;
+            $avg_overtime_rate = $overtime_result['avg_rate'] ?? 0;
+            $overtime_pay = $total_overtime_hours * $avg_overtime_rate;
+            
+            // Add overtime to earned salary
+            $earned_salary += $overtime_pay;
+            
+            // Calculate total deductions
+            // Calculate previous PF balance
+            $pf_previous_balance = 0.00;
+            $prev_balance_stmt = $conn->prepare("SELECT SUM(pf_amount) as total_pf FROM payslips WHERE user_id = ? AND (year < ? OR (year = ? AND month < ?)) ORDER BY year DESC, month DESC");
+            $prev_balance_stmt->bind_param("isss", $user_id, $year, $year, $month);
+            $prev_balance_stmt->execute();
+            $balance_result = $prev_balance_stmt->get_result()->fetch_assoc();
+            if ($balance_result && $balance_result['total_pf']) {
+                $pf_previous_balance = $balance_result['total_pf'];
+            }
+            
+            $total_deductions = $total_advance + $professional_tax + $pf_amount;
+            $net_salary = $earned_salary - $total_deductions; // Allow negative values for accurate accounting
             
             // Check if payslip already exists
             $stmt = $conn->prepare("SELECT id FROM payslips WHERE user_id = ? AND month = ? AND year = ?");
@@ -69,9 +103,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->execute();
             
             if ($stmt->get_result()->num_rows == 0) {
-                // Insert payslip
-                $stmt = $conn->prepare("INSERT INTO payslips (user_id, month, year, basic_salary, present_days, leave_days, total_days, earned_salary, advances, deductions, net_salary, generated_by, generated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-                $stmt->bind_param("issiiiiidddi", $user_id, $month, $year, $basic_salary, $present_days, $leave_days, $total_days, $earned_salary, $total_advance, $deductions, $net_salary, $_SESSION['user_id']);
+                // Insert payslip with new fields
+                $stmt = $conn->prepare("INSERT INTO payslips (user_id, month, year, basic_salary, present_days, leave_days, total_days, earned_salary, overtime_hours, overtime_pay, advances, professional_tax, pf_amount, pf_previous_balance, deductions, net_salary, generated_by, generated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                $stmt->bind_param("issdiiidddddddddi", $user_id, $month, $year, $basic_salary, $present_days, $leave_days, $total_days, $earned_salary, $total_overtime_hours, $overtime_pay, $total_advance, $professional_tax, $pf_amount, $pf_previous_balance, $total_deductions, $net_salary, $_SESSION['user_id']);
                 
                 if ($stmt->execute()) {
                     // Create notification for the user
@@ -185,36 +219,8 @@ $all_payslips = $stmt->get_result();
     <div class="dashboard-container">
         <!-- Navigation -->
         <nav class="navbar">
-            <div class="navbar-content">
-                <a href="dashboard.php" class="navbar-brand">
-                    <i class="fas fa-users-cog"></i>
-                    Sunny Polymers
-                </a>
-                
-                <?php echo getNavigationMenu('generate_salary'); ?>
-                
-                <!-- Right side container for notifications and mobile menu -->
-                <div class="navbar-right">
-                    <!-- Notification Section -->
-                    <div class="navbar-notifications">
-                        <div class="notification-container">
-                            <div class="notification-trigger" onclick="toggleNotifications()">
-                                <i class="fas fa-bell"></i>
-                                <span class="notification-label">Notifications</span>
-                                <?php echo getNotificationBadge($_SESSION['user_id']); ?>
-                            </div>
-                            <?php echo getNotificationDropdown($_SESSION['user_id']); ?>
-                        </div>
-                    </div>
-                    
-                    <!-- Mobile Menu Toggle -->
-                    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
-            </div>
+            <?php echo getNavigationMenu('generate_salary'); ?>
         </nav>
-
         <!-- Main Content -->
         <div class="main-content">
             <div class="page-header">
@@ -295,6 +301,21 @@ $all_payslips = $stmt->get_result();
                                 </div>
                             </div>
                             
+                            <!-- Professional Tax and PF Fields -->
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="professional_tax">Professional Tax (₹)</label>
+                                    <input type="number" name="professional_tax" id="professional_tax" class="form-control" value="0" min="0" step="0.01" placeholder="0.00">
+                                    <small class="form-text text-muted">Monthly professional tax deduction</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="pf_amount">Provident Fund (₹)</label>
+                                    <input type="number" name="pf_amount" id="pf_amount" class="form-control" value="0" min="0" step="0.01" placeholder="0.00">
+                                    <small class="form-text text-muted">Monthly PF contribution</small>
+                                </div>
+                            </div>
+                            
                             <button type="submit" name="generate_salary" class="btn btn-primary btn-block">
                                 <i class="fas fa-calculator"></i>
                                 Generate Salary Slip
@@ -371,7 +392,11 @@ $all_payslips = $stmt->get_result();
                                 <th>Present Days</th>
                                 <th>Leave Days</th>
                                 <th>Earned Salary</th>
+                                <th>Overtime Hours</th>
+                                <th>Overtime Pay</th>
                                 <th>Advances</th>
+                                <th>Professional Tax</th>
+                                <th>PF Amount</th>
                                 <th>Net Salary</th>
                                 <th>Generated By</th>
                                 <th>Generated On</th>
@@ -408,12 +433,28 @@ $all_payslips = $stmt->get_result();
                                         </td>
                                         <td>₹<?php echo number_format($payslip['earned_salary'], 2); ?></td>
                                         <td>
+                                            <?php if (($payslip['overtime_hours'] ?? 0) > 0): ?>
+                                                <span class="badge badge-info"><?php echo number_format($payslip['overtime_hours'], 1); ?> hrs</span>
+                                            <?php else: ?>
+                                                <span class="text-muted">0 hrs</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if (($payslip['overtime_pay'] ?? 0) > 0): ?>
+                                                <span class="badge badge-success">₹<?php echo number_format($payslip['overtime_pay'], 2); ?></span>
+                                            <?php else: ?>
+                                                <span class="text-muted">₹0.00</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
                                             <?php if ($payslip['advances'] > 0): ?>
                                                 <span class="badge badge-danger">₹<?php echo number_format($payslip['advances'], 2); ?></span>
                                             <?php else: ?>
                                                 <span class="text-muted">₹0.00</span>
                                             <?php endif; ?>
                                         </td>
+                                        <td>₹<?php echo number_format($payslip['professional_tax'], 2); ?></td>
+                                        <td>₹<?php echo number_format($payslip['pf_amount'], 2); ?></td>
                                         <td>
                                             <strong>₹<?php echo number_format($payslip['net_salary'], 2); ?></strong>
                                         </td>
@@ -444,7 +485,7 @@ $all_payslips = $stmt->get_result();
                                 <?php endwhile; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="11" class="text-center text-muted">
+                                    <td colspan="15" class="text-center text-muted">
                                         <i class="fas fa-file-invoice" style="font-size: 3rem; color: #dee2e6;"></i>
                                         <p>No salary slips found</p>
                                     </td>
@@ -572,6 +613,32 @@ $all_payslips = $stmt->get_result();
         .user-info small {
             color: #6c757d;
             font-size: 0.8rem;
+        }
+        
+        /* Professional Tax and PF Fields Styling */
+        .form-text {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+            margin-right: 15px;
+        }
+        
+        .form-row .form-group:last-child {
+            margin-right: 0;
+        }
+        
+        /* Enhanced form styling */
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .form-control {
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
     </style>
     <?php echo getNotificationScripts(); ?>
