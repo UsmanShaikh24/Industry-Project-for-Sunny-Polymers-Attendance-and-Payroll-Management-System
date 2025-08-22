@@ -230,14 +230,17 @@ function getNavigationMenu($current_page = '') {
                         // Close all other dropdowns first
                         const allDropdowns = document.querySelectorAll('.nav-dropdown');
                         allDropdowns.forEach(function(dd) {
-                            dd.classList.remove('active');
+                            if (dd !== parent) {
+                                dd.classList.remove('active');
+                            }
                         });
                         
-                        // Toggle current dropdown - if it wasn't active, make it active
-                        if (!isCurrentlyActive) {
+                        // Toggle current dropdown
+                        if (isCurrentlyActive) {
+                            parent.classList.remove('active');
+                        } else {
                             parent.classList.add('active');
                         }
-                        // If it was active, it's now closed due to the removeAll above
                     }
                 });
             });
