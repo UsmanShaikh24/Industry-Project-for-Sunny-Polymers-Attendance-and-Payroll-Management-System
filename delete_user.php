@@ -3,6 +3,7 @@ session_start();
 require_once 'includes/db.php';
 require_once 'includes/auth.php';
 require_once 'includes/notifications.php';
+require_once 'includes/navigation.php';
 
 // Require admin access
 require_admin();
