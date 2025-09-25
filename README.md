@@ -527,6 +527,11 @@ This project is proprietary software developed for Sunny Polymers. All rights re
 - User management
 - Basic reporting
 
+### **My Team**
+- 👨‍💻 Member 1 — Usman Shaikh
+- 🧑‍💼 Member 2 — Aditya Parade 
+- 🧑‍💼 Member 3 — Sarth Mane 
+- 👩‍💼 Member 4 — Jiya Sharma
 ---
 
 **Built with ❤️ for Sunny Polymers by Usman Shaikh and his Team** 
