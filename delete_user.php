@@ -12,7 +12,7 @@ require_admin();
 $user_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if (!$user_id) {
-    header("Location: add_user.php?error=invalid_user");
+    header("Location: manage_users.php?error=invalid_user");
     exit();
 }
 
@@ -23,13 +23,13 @@ $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
 
 if (!$user) {
-    header("Location: add_user.php?error=user_not_found");
+    header("Location: manage_users.php?error=user_not_found");
     exit();
 }
 
 // Prevent deleting the current admin user
 if ($user_id == $_SESSION['user_id']) {
-    header("Location: add_user.php?error=cannot_delete_self");
+    header("Location: manage_users.php?error=cannot_delete_self");
     exit();
 }
 
@@ -74,13 +74,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_delete'])) {
         // Commit transaction
         $conn->commit();
         
-        header("Location: add_user.php?success=user_deleted&name=" . urlencode($user['name']));
+        header("Location: manage_users.php?success=user_deleted&name=" . urlencode($user['name']));
         exit();
         
     } catch (Exception $e) {
         // Rollback transaction on error
         $conn->rollback();
-        header("Location: add_user.php?error=delete_failed");
+        header("Location: manage_users.php?error=delete_failed");
         exit();
     }
 }

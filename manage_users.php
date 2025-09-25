@@ -11,14 +11,23 @@ require_admin();
 $message = '';
 $message_type = '';
 
+// Check for session messages
+if (isset($_SESSION['add_user_message'])) {
+    $message = $_SESSION['add_user_message'];
+    $message_type = $_SESSION['add_user_message_type'];
+    unset($_SESSION['add_user_message']);
+    unset($_SESSION['add_user_message_type']);
+}
+
 // Handle success/error messages
 if (isset($_GET['success'])) {
+    $message_type = 'success';
     if ($_GET['success'] == 'user_deleted') {
         $message = "User '" . htmlspecialchars($_GET['name'] ?? '') . "' has been successfully deleted.";
-        $message_type = 'success';
     } elseif ($_GET['success'] == 'user_updated') {
         $message = "User has been successfully updated.";
-        $message_type = 'success';
+    } elseif ($_GET['success'] == 'user_added' && isset($_GET['message'])) {
+        $message = htmlspecialchars(urldecode($_GET['message']));
     }
 }
 
@@ -263,6 +272,7 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                                 <th>Name</th>
                                 <th>Mobile</th>
                                 <th>Role</th>
+                                <th>Designation</th>
                                 <th>Site</th>
                                 <th>Salary</th>
                                 <th>Status</th>
@@ -285,6 +295,13 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                                         <span class="badge badge-<?php echo $user['role'] == 'admin' ? 'danger' : ($user['role'] == 'staff' ? 'warning' : 'primary'); ?>">
                                             <?php echo ucfirst($user['role']); ?>
                                         </span>
+                                    </td>
+                                    <td>
+                                        <?php if (!empty($user['designation'])): ?>
+                                            <?php echo htmlspecialchars($user['designation']); ?>
+                                        <?php else: ?>
+                                            <span class="text-muted">Not specified</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <?php if ($user['site_name']): ?>

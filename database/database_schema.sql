@@ -12,6 +12,7 @@ CREATE TABLE users (
     mobile VARCHAR(15) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     role ENUM('admin', 'staff', 'worker') DEFAULT 'worker',
+    designation VARCHAR(100) DEFAULT NULL,
     state VARCHAR(50) NOT NULL,
     date_of_joining DATE NOT NULL,
     salary DECIMAL(10,2) NOT NULL,

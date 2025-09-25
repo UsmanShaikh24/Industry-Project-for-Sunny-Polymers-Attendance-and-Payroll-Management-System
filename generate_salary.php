@@ -172,10 +172,10 @@ if (isset($_GET['success'])) {
     }
 }
 
-// Get all workers
-$stmt = $conn->prepare("SELECT u.*, s.name as site_name FROM users u LEFT JOIN sites s ON u.site_id = s.id WHERE u.role = 'worker' ORDER BY u.name");
+// Get all users
+$stmt = $conn->prepare("SELECT u.*, s.name as site_name FROM users u LEFT JOIN sites s ON u.site_id = s.id ORDER BY u.name");
 $stmt->execute();
-$workers = $stmt->get_result();
+$users = $stmt->get_result();
 
 // Get recent payslips
 $stmt = $conn->prepare("
@@ -214,6 +214,98 @@ $all_payslips = $stmt->get_result();
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <?php echo getNotificationStyles(); ?>
+    <style>
+        /* Search functionality styling */
+        .search-group {
+            margin-bottom: 20px;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        /* Hide empty optgroups when filtering */
+        optgroup:empty {
+            display: none;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('employee_search');
+            const userSelect = document.getElementById('user_id');
+            const allOptions = Array.from(userSelect.getElementsByTagName('option'));
+            
+            searchInput.addEventListener('input', function() {
+                const searchValue = this.value.toLowerCase().trim();
+                
+                // Store filtered options by group
+                const filteredOptions = {
+                    admin: [],
+                    staff: [],
+                    worker: []
+                };
+                
+                // Filter options
+                allOptions.forEach(option => {
+                    if (option.value === "") return; // Skip the placeholder option
+                    
+                    const optionText = option.textContent.toLowerCase();
+                    const matches = optionText.includes(searchValue);
+                    
+                    if (matches) {
+                        // Determine which group this option belongs to
+                        const group = option.closest('optgroup');
+                        if (group) {
+                            const groupLabel = group.label.toLowerCase();
+                            if (groupLabel.includes('administrators')) {
+                                filteredOptions.admin.push(option.cloneNode(true));
+                            } else if (groupLabel.includes('staff')) {
+                                filteredOptions.staff.push(option.cloneNode(true));
+                            } else if (groupLabel.includes('workers')) {
+                                filteredOptions.worker.push(option.cloneNode(true));
+                            }
+                        }
+                    }
+                });
+                
+                // Clear existing options except the first placeholder
+                while (userSelect.lastChild && userSelect.lastChild !== userSelect.firstChild) {
+                    userSelect.removeChild(userSelect.lastChild);
+                }
+                
+                // Create and append optgroups with filtered options
+                if (filteredOptions.admin.length > 0) {
+                    const adminGroup = document.createElement('optgroup');
+                    adminGroup.label = 'Administrators';
+                    filteredOptions.admin.forEach(opt => adminGroup.appendChild(opt));
+                    userSelect.appendChild(adminGroup);
+                }
+                
+                if (filteredOptions.staff.length > 0) {
+                    const staffGroup = document.createElement('optgroup');
+                    staffGroup.label = 'Staff Members';
+                    filteredOptions.staff.forEach(opt => staffGroup.appendChild(opt));
+                    userSelect.appendChild(staffGroup);
+                }
+                
+                if (filteredOptions.worker.length > 0) {
+                    const workerGroup = document.createElement('optgroup');
+                    workerGroup.label = 'Workers';
+                    filteredOptions.worker.forEach(opt => workerGroup.appendChild(opt));
+                    userSelect.appendChild(workerGroup);
+                }
+            });
+        });
+    </script>
 </head>
 <body>
     <div class="dashboard-container">
@@ -225,7 +317,7 @@ $all_payslips = $stmt->get_result();
         <div class="main-content">
             <div class="page-header">
                 <h1 class="page-title">Generate Salary Slips</h1>
-                <p class="page-subtitle">Generate monthly salary slips for workers</p>
+                <p class="page-subtitle">Generate monthly salary slips for all employees</p>
             </div>
 
             <?php if ($success_message): ?>
@@ -254,19 +346,73 @@ $all_payslips = $stmt->get_result();
                     
                     <div class="card-body">
                         <form method="POST" class="form">
+                            <!-- Search box -->
+                            <div class="form-group search-group">
+                                <label for="employee_search">Search Employee</label>
+                                <div class="search-input-wrapper">
+                                    <input type="text" id="employee_search" class="form-control" placeholder="Search by name, mobile, or designation...">
+                                    <i class="fas fa-search search-icon"></i>
+                                </div>
+                            </div>
+
                             <div class="form-group">
-                                <label for="user_id">Select Worker</label>
+                                <label for="user_id">Select Employee</label>
                                 <select name="user_id" id="user_id" required class="form-control">
-                                    <option value="">Choose a worker...</option>
-                                    <?php while ($worker = $workers->fetch_assoc()): ?>
-                                        <option value="<?php echo $worker['id']; ?>">
-                                            <?php echo htmlspecialchars($worker['name']); ?> 
-                                            (<?php echo htmlspecialchars($worker['mobile']); ?>)
-                                            <?php if ($worker['site_name']): ?>
-                                                - <?php echo htmlspecialchars($worker['site_name']); ?>
-                                            <?php endif; ?>
+                                    <option value="">Choose an employee...</option>
+                                    
+                                    <!-- Admins -->
+                                    <optgroup label="Administrators">
+                                    <?php 
+                                    $users->data_seek(0);
+                                    while ($user = $users->fetch_assoc()):
+                                        if ($user['role'] == 'admin'):
+                                    ?>
+                                        <option value="<?php echo $user['id']; ?>">
+                                            <?php echo htmlspecialchars($user['name']); ?> 
+                                            (<?php echo htmlspecialchars($user['mobile']); ?>)
+                                            <?php if ($user['site_name']): ?> - <?php echo htmlspecialchars($user['site_name']); ?><?php endif; ?>
                                         </option>
-                                    <?php endwhile; ?>
+                                    <?php 
+                                        endif;
+                                    endwhile;
+                                    ?>
+                                    </optgroup>
+                                    
+                                    <!-- Staff -->
+                                    <optgroup label="Staff Members">
+                                    <?php 
+                                    $users->data_seek(0);
+                                    while ($user = $users->fetch_assoc()):
+                                        if ($user['role'] == 'staff'):
+                                    ?>
+                                        <option value="<?php echo $user['id']; ?>">
+                                            <?php echo htmlspecialchars($user['name']); ?> 
+                                            (<?php echo htmlspecialchars($user['mobile']); ?>)
+                                            <?php if ($user['site_name']): ?> - <?php echo htmlspecialchars($user['site_name']); ?><?php endif; ?>
+                                        </option>
+                                    <?php 
+                                        endif;
+                                    endwhile;
+                                    ?>
+                                    </optgroup>
+                                    
+                                    <!-- Workers -->
+                                    <optgroup label="Workers">
+                                    <?php 
+                                    $users->data_seek(0);
+                                    while ($user = $users->fetch_assoc()):
+                                        if ($user['role'] == 'worker'):
+                                    ?>
+                                        <option value="<?php echo $user['id']; ?>">
+                                            <?php echo htmlspecialchars($user['name']); ?> 
+                                            (<?php echo htmlspecialchars($user['mobile']); ?>)
+                                            <?php if ($user['site_name']): ?> - <?php echo htmlspecialchars($user['site_name']); ?><?php endif; ?>
+                                        </option>
+                                    <?php 
+                                        endif;
+                                    endwhile;
+                                    ?>
+                                    </optgroup>
                                 </select>
                             </div>
                             

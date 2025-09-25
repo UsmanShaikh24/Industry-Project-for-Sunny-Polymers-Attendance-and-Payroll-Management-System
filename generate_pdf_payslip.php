@@ -19,7 +19,7 @@ function generatePDFPayslip($payslip_id) {
     
     // Get payslip data
     $stmt = $conn->prepare("
-        SELECT p.*, u.name as user_name, u.mobile, u.state, u.role, u.pf_uan_number, u.bank_name, u.account_number, 
+        SELECT p.*, u.name as user_name, u.mobile, u.state, u.role, u.designation, u.pf_uan_number, u.bank_name, u.account_number, 
                u.ifsc_code, u.branch_name, s.name as site_name, g.name as generated_by_name, p.generated_at 
         FROM payslips p 
         JOIN users u ON p.user_id = u.id 
@@ -65,21 +65,8 @@ function generatePDFPayslip($payslip_id) {
     $conveyance_allowance = $user_allowances['conveyance_allowance'] ?? 0;
     $total_earnings = $basic_pay + $dearness_allowance + $medical_allowance + $house_rent_allowance + $conveyance_allowance;
     
-    // Format designation based on role
-    $designation = '';
-    switch($payslip['role']) {
-        case 'admin':
-            $designation = 'ADMINISTRATOR';
-            break;
-        case 'staff':
-            $designation = 'STAFF MEMBER';
-            break;
-        case 'worker':
-            $designation = 'WORKER';
-            break;
-        default:
-            $designation = strtoupper($payslip['role']);
-    }
+    // Use designation from database or fallback to role if not set
+    $designation = !empty($payslip['designation']) ? strtoupper($payslip['designation']) : strtoupper($payslip['role']);
     
     // Create HTML content for PDF - exact replica of the image
     $html = '

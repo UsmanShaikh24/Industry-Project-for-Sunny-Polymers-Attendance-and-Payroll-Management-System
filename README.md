@@ -485,7 +485,15 @@ This project is proprietary software developed for Sunny Polymers. All rights re
 
 ## 📝 **Changelog**
 
-### **Version 2.2.0** (Current)
+### **Version 2.3.0** (Current)
+- 👔 **NEW**: Added designation field for better employee categorization
+- 💰 **NEW**: Automated allowance calculations based on basic salary
+- ⚡ **IMPROVED**: Standardized allowance percentages (HRA: 13.5%, DA: 20%, MA: 6.5%, CA: 10%)
+- 💵 **IMPROVED**: Enhanced salary slip generation for all employee types
+- 🔄 **FIXED**: User redirection after deletion in manage users page
+- 🎯 **IMPROVED**: More accurate payroll calculations with percentage-based allowances
+
+### **Version 2.2.0**
 - 🔍 **NEW**: Advanced search and filtering system for site assignments
 - 📍 **NEW**: Dedicated "Manage Sites" page with comprehensive site overview
 - 🎯 **NEW**: Real-time dropdown filtering with visual instructions
@@ -519,11 +527,6 @@ This project is proprietary software developed for Sunny Polymers. All rights re
 - User management
 - Basic reporting
 
-### **My Team**  
-- 👨‍💻 Member 1 — Usman Shaikh
-- 🧑‍💼 Member 2 — Aditya Parade
-- 🧑‍💼 Member 3 — Sarth Mane
-- 👩‍💼 Member 4 — Jiya Sharma 
 ---
 
 **Built with ❤️ for Sunny Polymers by Usman Shaikh and his Team** 

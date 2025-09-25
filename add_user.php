@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $date_of_joining = sanitize_input($_POST['date_of_joining']);
     $salary = sanitize_input($_POST['salary']);
     $role = sanitize_input($_POST['role']);
+    $designation = !empty($_POST['designation']) ? sanitize_input($_POST['designation']) : null;
     $site_id = !empty($_POST['site_id']) ? sanitize_input($_POST['site_id']) : null;
     $bank_name = sanitize_input($_POST['bank_name']);
     $account_number = sanitize_input($_POST['account_number']);
@@ -53,18 +54,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $message = 'Mobile number already exists.';
             $message_type = 'danger';
         } else {
-            // Generate secure default password
-            $default_password = generateSecurePassword();
+            // Generate default password (name + 123)
+            $default_password = str_replace(' ', '', strtolower($name)) . "123";
             $hashed_password = password_hash($default_password, PASSWORD_DEFAULT);
             
-            $stmt = $conn->prepare("INSERT INTO users (name, mobile, password, role, state, date_of_joining, salary, dearness_allowance, medical_allowance, house_rent_allowance, conveyance_allowance, pf_uan_number, site_id, bank_name, account_number, ifsc_code, branch_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssssdddddssisss", $name, $mobile, $hashed_password, $role, $state, $date_of_joining, $salary, $dearness_allowance, $medical_allowance, $house_rent_allowance, $conveyance_allowance, $pf_uan_number, $site_id, $bank_name, $account_number, $ifsc_code, $branch_name);
+            $stmt = $conn->prepare("INSERT INTO users (name, mobile, password, role, designation, state, date_of_joining, salary, dearness_allowance, medical_allowance, house_rent_allowance, conveyance_allowance, pf_uan_number, site_id, bank_name, account_number, ifsc_code, branch_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssssssdddddssisss", $name, $mobile, $hashed_password, $role, $designation, $state, $date_of_joining, $salary, $dearness_allowance, $medical_allowance, $house_rent_allowance, $conveyance_allowance, $pf_uan_number, $site_id, $bank_name, $account_number, $ifsc_code, $branch_name);
             
             if ($stmt->execute()) {
-                // Store success message in session and redirect
-                $_SESSION['add_user_message'] = "User added successfully! Default password: $default_password. Please share this password securely with the user and ask them to change it on first login.";
+                // Store success message and redirect
+                $success_message = "User added successfully! Default password: $default_password. Please share this password securely with the user and ask them to change it on first login.";
+                $_SESSION['add_user_message'] = $success_message;
                 $_SESSION['add_user_message_type'] = 'success';
-                header("Location: add_user.php");
+                header("Location: manage_users.php");
                 exit();
             } else {
                 $message = "Error adding user. Please try again.";
@@ -78,11 +80,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $stmt = $conn->prepare("SELECT id, name, state FROM sites ORDER BY name");
 $stmt->execute();
 $sites = $stmt->get_result();
-
-// Get all users for display
-$stmt = $conn->prepare("SELECT u.*, s.name as site_name FROM users u LEFT JOIN sites s ON u.site_id = s.id ORDER BY u.created_at DESC");
-$stmt->execute();
-$users = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -153,14 +150,12 @@ $users = $stmt->get_result();
                 <?php endif; ?>
             <?php endif; ?>
 
-            <div class="grid grid-2">
-                <!-- Add User Form -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Add New User</h3>
-                    </div>
-                    
-                    <form method="POST" class="form">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Add New User</h3>
+                </div>
+                
+                <form method="POST" class="form">
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="name">Full Name *</label>
@@ -207,6 +202,11 @@ $users = $stmt->get_result();
                                     <option value="staff" <?php echo (isset($_POST['role']) && $_POST['role'] == 'staff') ? 'selected' : ''; ?>>Staff</option>
                                     <option value="admin" <?php echo (isset($_POST['role']) && $_POST['role'] == 'admin') ? 'selected' : ''; ?>>Admin</option>
                                 </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="designation">Designation</label>
+                                <input type="text" id="designation" name="designation" class="form-control" value="<?php echo isset($_POST['designation']) ? htmlspecialchars($_POST['designation']) : ''; ?>" placeholder="Enter designation">
                             </div>
                         </div>
                         
@@ -282,94 +282,31 @@ $users = $stmt->get_result();
                     </form>
                 </div>
 
-                <!-- Users List -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">All Users</h3>
-                    </div>
-                    
-                    <div class="table-container">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Mobile</th>
-                                    <th>Role</th>
-                                    <th>Site</th>
-                                    <th>Salary</th>
-                                    <th>Total Allowances</th>
-                                    <th>Bank Details</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php while ($user = $users->fetch_assoc()): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($user['name']); ?></td>
-                                    <td><?php echo htmlspecialchars($user['mobile']); ?></td>
-                                    <td>
-                                        <span class="badge badge-<?php echo $user['role'] == 'admin' ? 'danger' : ($user['role'] == 'staff' ? 'warning' : 'primary'); ?>">
-                                            <?php echo ucfirst($user['role']); ?>
-                                        </span>
-                                    </td>
-                                    <td><?php echo htmlspecialchars($user['site_name'] ?? 'Not Assigned'); ?></td>
-                                    <td>₹<?php echo number_format($user['salary'], 2); ?></td>
-                                    <td>
-                                        <?php 
-                                        $total_allowances = ($user['dearness_allowance'] ?? 0) + 
-                                                          ($user['medical_allowance'] ?? 0) + 
-                                                          ($user['house_rent_allowance'] ?? 0) + 
-                                                          ($user['conveyance_allowance'] ?? 0);
-                                        echo '₹' . number_format($total_allowances, 2);
-                                        ?>
-                                    </td>
-                                    <td>
-                                        <?php if ($user['bank_name'] && $user['account_number']): ?>
-                                            <small>
-                                                <strong><?php echo htmlspecialchars($user['bank_name']); ?></strong><br>
-                                                A/C: <?php echo htmlspecialchars($user['account_number']); ?><br>
-                                                IFSC: <?php echo htmlspecialchars($user['ifsc_code'] ?? 'N/A'); ?>
-                                            </small>
-                                        <?php else: ?>
-                                            <span class="text-muted">Not specified</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <?php if ($user['role'] == 'admin'): ?>
-                                            <span class="status-admin">Admin</span>
-                                        <?php elseif ($user['site_id']): ?>
-                                            <span class="status-present">Assigned</span>
-                                        <?php else: ?>
-                                            <span class="status-absent">Unassigned</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <a href="edit_user.php?id=<?php echo $user['id']; ?>" class="btn btn-sm btn-primary" title="Edit User">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <?php if ($user['id'] != $_SESSION['user_id']): ?>
-                                                <a href="delete_user.php?id=<?php echo $user['id']; ?>" class="btn btn-sm btn-danger" title="Delete User" onclick="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
-                                            <?php else: ?>
-                                                <span class="btn btn-sm btn-secondary" title="Cannot delete yourself" style="cursor: not-allowed;">
-                                                    <i class="fas fa-trash"></i>
-                                                </span>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <?php endwhile; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                </button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
+    <script>
+        document.getElementById('salary').addEventListener('input', function() {
+            const basicSalary = parseFloat(this.value) || 0;
+            
+            // Calculate allowances
+            const dearnessAllowance = basicSalary * 0.20;  // 20% of basic salary
+            const medicalAllowance = basicSalary * 0.065;  // 6.5% of basic salary
+            const houseRentAllowance = basicSalary * 0.135; // 13.5% of basic salary
+            const conveyanceAllowance = basicSalary * 0.10; // 10% of basic salary
+            
+            // Update allowance fields
+            document.getElementById('dearness_allowance').value = dearnessAllowance.toFixed(2);
+            document.getElementById('medical_allowance').value = medicalAllowance.toFixed(2);
+            document.getElementById('house_rent_allowance').value = houseRentAllowance.toFixed(2);
+            document.getElementById('conveyance_allowance').value = conveyanceAllowance.toFixed(2);
+        });
+    </script>
+    
     <style>
         .badge {
             padding: 4px 8px;
